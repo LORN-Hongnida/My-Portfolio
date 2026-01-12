@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app-bg: var(--bg-color);
+  --color-app-text: var(--text-color);
+  --color-accent: var(--accent-color);
+  --color-glass: var(--glass-bg);
+}
+
+:root {
+  /* Night Mode (Default) */
+  --bg-color: #0b0b1a;
+  --text-color: #f8fafc;
+  --accent-color: #6366f1;
+  --glass-hex: 11, 11, 26;
+}
+
+[data-theme='light'] {
+  /* Day Mode */
+  --bg-color: #f8fafc;
+  --text-color: #0f172a;
+  --accent-color: #facc15;
+  --glass-hex: 248, 250, 252;
+}
+
+#root, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.5s ease, ease-in-out;
+}
+
+@keyframes scan {
+  0% { top: 0%; opacity: 0; }
+  50% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.animate-scan-move {
+  position: absolute;
+  animation: scan 1.5s linear infinite;
+  pointer-events: none;
+}
+
+.orbit-wrapper {
+  position: relative;
+  width: 100%;
+  height: clamp(400px, 60vh, 700px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 2000px;
+}
+
+
+.inner-dock-container {
+  transform: rotateX(75deg); /* Matches the ring tilt */
+  position: absolute;
+  z-index: 5;
+}
+
+/* Fix the tilt and ensure visibility */
+.visual-ring-accent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Use a slightly less aggressive tilt so the "back" of the ring doesn't vanish */
+  transform: translate(-50%, -50%) rotateX(70deg); 
+  border: 1px solid var(--accent); /* thinner lines look more "techy" */
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0; /* Keep behind the cards */
+}
+
+/* index.css */
+.visual-ring-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Force a center alignment and the 75-degree tilt */
+  transform: translate(-50%, -50%) rotateX(75deg);
+  border-radius: 50%;
+  pointer-events: none;
+  
+  /* Increased border visibility */
+  border: 2px solid var(--accent); 
+  
+  /* The glow effect */
+  box-shadow: 0 0 30px rgba(var(--accent), 0.4), 
+              inset 0 0 20px rgba(var(--accent), 0.4);
+  
+  /* Ensure it isn't hidden behind the background */
+  z-index: 2; 
+  opacity: 0.3; /* Adjust this to make it brighter/softer */
+}
+
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.2; filter: blur(2px); }
+  50% { opacity: 0.5; filter: blur(5px); }
+}
+
+/* Ensure the SkillCard glow works */
+.skill-card-glow {
+  position: absolute;
+  inset: -10px;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  opacity: 0;
+  filter: blur(15px);
+  transition: opacity 0.3s ease;
+}
+
+.skill-card-container:hover .skill-card-glow {
+  opacity: 0.15;
+}
+
+.skill-orbit-item {
+  position: absolute;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  /* This undoes the X-rotation of the parent so the card stays upright */
+  transform-style: preserve-3d;
+}
+.inner-dock-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotateX(75deg);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.dock-message {
+  /* background: var(--accent-color); */
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 1px 2px var(--accent-color);
+  backdrop-filter: blur(10px);
+  color: var(--text-color);
+}
+
+.dock-message::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--accent-color) ;
+}
+
+/* index.css additions */
+.percentage-box {
+  background: rgba(11, 11, 26, 0.85);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  pointer-events: none;
+  z-index: 60;
+}
+
+.charge-ring-svg {
+  overflow: visible;
+  /* Ensures the drop shadow isn't clipped */
+}
+
+.nav-btn {
+  @apply px-8 py-2 border border-accent/30 text-accent font-mono text-xs tracking-widest hover:bg-accent/10 transition-all uppercase;
+  clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0% 30%);
+}
+
+#projects {
+    /* Create a fading fog effect at the top of the section */
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+}
