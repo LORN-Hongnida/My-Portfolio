@@ -161,7 +161,7 @@ const Projects = ({ projects = fallbackProjects, orbStatus }) => {
             <div className="h-1 w-12 bg-accent mt-4" />
           </div>
 
-          <div className="relative mt-4 border-l-2 border-accent/20 pl-6 py-2 bg-gradient-to-r from-accent/5 to-transparent">
+          <div className="relative mt-4 border-l-2 border-accent/20 pl-6 py-2 bg-gradient-to-r from-accent/5 via-purple-400/5 to-transparent">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
               <span className="font-mono text-[10px] text-accent tracking-widest uppercase opacity-70">Station_Alpha_01</span>

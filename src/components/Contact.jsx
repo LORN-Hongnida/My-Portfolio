@@ -13,8 +13,12 @@ const Contact = ({ orbStatus }) => {
 
   return (
     <section id="contact" className="py-24 px-10 md:px-32 bg-app-bg relative overflow-hidden">
+      <div className="absolute top-0 -left-20 w-96 h-96 bg-accent/8 blur-[120px] rounded-full"></div>
+      <div className="absolute bottom-0 -right-0 w-96 h-96 bg-accent/10 blur-[120px] rounded-full"></div>
+
       <div className="max-w-4xl mx-auto">
         <OrbTrigger comment="Awaiting user input. Secure channel ready." orbStatus={orbStatus}>
+                    backgroundImage: 'bg-gradient-to-r from-accent to-purple-500',
           <h2 className="text-4xl md:text-6xl font-bold text-app-text tracking-tighter mb-12">
             LEAVE_A_<span className="text-accent">MESSAGE</span>
           </h2>

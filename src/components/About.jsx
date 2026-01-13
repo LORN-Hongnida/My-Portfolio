@@ -8,7 +8,7 @@ const About = ({ orbStatus }) => {
 
     return (
         <section id="about" className="relative min-h-screen w-full py-20 px-10 md:px-32 bg-app-bg overflow-hidden transition-colors duration-500">
-            <div className="absolute left-20 w-96 h-96 bg-accent/10 blur-[120px] rounded-full"></div>
+            <div className="absolute left-20 w-96 h-96 bg-accent/8 blur-[120px] rounded-full"></div>
             
             <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
                 style={{ 

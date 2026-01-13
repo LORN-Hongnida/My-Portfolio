@@ -22,28 +22,64 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="fixed top-0 left-0 w-full z-[1000] px-10 py-5 flex justify-between items-center  backdrop-blur-lg border-b border-white/10">
-            <div className='flex items-center gap-2 cursor-pointer' onClick={() => scrollToSection('hero')}>
-                <svg width="30" height="30" viewBox='0 0 100 100' className='fill-indigo-400'>
-                    <path d='M50 5 L70 30 L50 55 L30 30 Z M50 95 L30 70 L50 45 L70 70 Z'/>
-                    <circle cx='50' cy='50' r='10' fill='fill-white' />
-                </svg>
-                <span className='font-bold tracking-tighter text-xl text-app-text'>HONGNIDA LORN</span>
+        <nav className="fixed top-0 left-0 w-full z-[1000] px-10 py-5 flex justify-between items-center backdrop-blur-lg border-b border-white/10">
+            {/* LOGO SECTION */}
+            <div className='flex items-center gap-3 cursor-pointer group' onClick={() => scrollToSection('hero')}>
+                <div className="transition-transform duration-300 group-hover:scale-110">
+                    <OrbLogo size={32} />
+                </div>
+                <span className='font-bold tracking-tighter text-xl text-app-text uppercase'>
+                    Hongnida Lorn
+                </span>
             </div>
 
+            {/* NAV LINKS */}
             <div className="flex items-center gap-8">
-    <div className="flex gap-6 text-sm font-medium">
-      {/* Dynamic text color for light/dark mode */}
-      <a href="#about" onClick={(e) => { e.preventDefault(); scrollToSection('hero'); }} className="text-app-text/70 hover:text-app-text">Home</a>
-      <a href="#about" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }} className="text-app-text/70 hover:text-app-text">About</a>
-      <a href="#skills" onClick={(e) => { e.preventDefault(); scrollToSection('skills'); }} className="text-app-text/70 hover:text-app-text">Skills</a>
-      <a href="#projects" onClick={(e) => { e.preventDefault(); scrollToSection('projects'); }} className="text-app-text/70 hover:text-app-text">Projects</a>
-      <a href="#projects" onClick={(e) => { e.preventDefault(); scrollToSection('contact'); }} className="text-app-text/70 hover:text-app-text">Contact</a>
-    </div>
-    <button onClick={toggleTheme} className="text-xl">{theme === 'dark' ? '☀️' : '🌙'}</button>
-  </div>
+                <div className="hidden md:flex gap-6 text-sm font-mono uppercase tracking-widest">
+                    {['home', 'about', 'skills', 'projects', 'contact'].map((item) => (
+                        <a 
+                            key={item}
+                            href={`#${item}`} 
+                            onClick={(e) => { 
+                                e.preventDefault(); 
+                                scrollToSection(item === 'home' ? 'hero' : item); 
+                            }} 
+                            className="text-app-text/60 hover:text-accent transition-colors"
+                        >
+                            {item}
+                        </a>
+                    ))}
+                </div>
+                
+                <button 
+                    onClick={toggleTheme} 
+                    className="p-2 rounded-full bg-white/5 border border-white/10 hover:border-accent/50 transition-all text-lg"
+                >
+                    {theme === 'dark' ? '☀️' : '🌙'}
+                </button>
+            </div>
         </nav>
     );
 };
+
+// Internal Helper for the Logo
+const OrbLogo = ({ size = 30 }) => (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="navGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="var(--accent-color)" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="var(--accent-color)" stopOpacity="0" />
+            </radialGradient>
+            <filter id="softGlow">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        <circle cx="16" cy="16" r="15" fill="url(#navGlow)" />
+        <circle cx="16" cy="16" r="9" fill="var(--accent-color)" style={{ filter: 'url(#softGlow)' }} />
+        <circle cx="13" cy="15" r="1.2" fill="#0b0b1a" />
+        <circle cx="19" cy="15" r="1.2" fill="#0b0b1a" />
+    </svg>
+);
 
 export default Navbar;

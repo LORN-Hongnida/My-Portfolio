@@ -27,7 +27,7 @@ const Hero = ({ orbStatus, onOrbToggle }) => { // Added onOrbToggle prop
     <section className="relative min-h-screen w-full flex flex-col md:flex-row items-center justify-between px-10 md:px-32 pt-24 overflow-hidden bg-app-bg transition-colors duration-500">
       {/* Background Blurs */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-accent/10 blur-[120px] rounded-full"></div>
-      <div className="absolute top-1/2 -right-20 w-96 h-96 bg-accent/10 blur-[120px] rounded-full"></div>
+      <div className="absolute top-1/2 -right-20 w-96 h-96 bg-indigo-400/10 blur-[120px] rounded-full"></div>
 
       {/* LEFT SIDE: Content */}
       <div className="flex-1 z-10 space-y-6 mt-10 md:mt-0">
