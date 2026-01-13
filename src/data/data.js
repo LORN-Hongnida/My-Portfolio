@@ -19,8 +19,6 @@ import flutter from '../assets/skills/flutter.png'
 
 import CVGenerator from '../features/cvgenerator/CVGenerator'
 
-
-
 export const heroData = {
     heroRemark: "This is my favorite part of the site. Look at that glow!",
     greetings: "> HELLO, WORLD!",
