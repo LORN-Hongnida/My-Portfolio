@@ -23,11 +23,22 @@ const Skills = ({ orbStatus }) => {
   // handle Esc key & docking
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') window.dispatchEvent(new CustomEvent('orb-dock', { detail: false }));
+      if (e.key === 'Escape') window.dispatchEvent(new CustomEvent('orb-dock', { detail: { target: 'skill-dock', active: false } }));
       if (e.key === 'ArrowLeft') rotateLeft();
       if (e.key === 'ArrowRight') rotateRight();
     };
-    const handleDockChange = (e) => setIsOrbDocked(e.detail);
+    const handleDockChange = (e) => {
+      const detail = e.detail;
+      if (typeof detail === 'object') {
+        // New format: { target: 'skill-dock', active: true/false }
+        if (detail.target === 'skill-dock') {
+          setIsOrbDocked(detail.active);
+        }
+      } else {
+        // Legacy format: boolean
+        setIsOrbDocked(detail);
+      }
+    };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('orb-dock', handleDockChange);
@@ -65,13 +76,13 @@ const Skills = ({ orbStatus }) => {
   const rotateLeft = () => {
     const newIndex = (selectedIndex - 1 + skills.length) % skills.length;
     bringToFront(newIndex);
-    if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: true }));
+    if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: { target: 'skill-dock', active: true } }));
   };
 
   const rotateRight = () => {
     const newIndex = (selectedIndex + 1) % skills.length;
     bringToFront(newIndex);
-    if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: true }));
+    if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: { target: 'skill-dock', active: true } }));
   };
 
   return (
@@ -99,23 +110,33 @@ const Skills = ({ orbStatus }) => {
 
         {/* Outer ring */}
         <div className="w-[600px] h-[600px] border-2 border-accent/30 rounded-full" style={{ transform: 'rotateX(75deg)' }} />
-
+        
         {/* Charge ring container */}
         <div className="absolute" style={{ width: '500px', height: '500px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
           <svg width="500" height="500" className="absolute inset-0" style={{ transform: 'rotateX(75deg) rotate(-90deg)' }}>
+            {/* Background Ring (Static) */}
             <circle
               cx="250" cy="250" r={radius}
-              fill="none" stroke="rgba(99,102,241,0.2)" strokeWidth="2"
+              fill="none" stroke="var(--accent-color)" strokeWidth="1"
+              className="opacity-10"
               strokeDasharray={`${dashLength} ${gapLength}`}
             />
+            {/* Reactive Ring */}
             <circle
               cx="250" cy="250" r={radius}
-              fill="none" stroke="rgba(99,102,241,0.8)" strokeWidth="2"
+              fill="none" stroke="var(--accent-color)" strokeWidth="2"
               strokeDasharray={`${dashLength} ${gapLength}`}
-              className={isOrbDocked ? 'transition-colors duration-500 stroke-accent/80' : 'transition-colors duration-500 stroke-accent/20'}
-              style={{ filter: isOrbDocked ? 'drop-shadow(0 0 8px rgba(99,102,241,0.6))' : 'none' }}
+              className={`transition-all duration-700 ease-in-out ${
+                isOrbDocked 
+                  ? 'stroke-accent opacity-100' 
+                  : 'stroke-accent/20 opacity-30'
+              }`}
+              style={{ 
+                filter: isOrbDocked ? 'drop-shadow(0 0 12px var(--accent-color))' : 'none',
+              }}
             />
           </svg>
+        
 
           {/* PERCENTAGE - FLAT PERSPECTIVE STYLE */}
           <div
@@ -134,15 +155,29 @@ const Skills = ({ orbStatus }) => {
             }}
           >
              {isOrbDocked ? `--- ${skills[selectedIndex]?.level}% ---` : "--- 0% ---"}
+              {/* Undock button when docked */}
+            {isOrbDocked && (
+              <button
+                onClick={() => {
+                  setIsOrbDocked(false);
+                  window.dispatchEvent(new CustomEvent('orb-dock', { detail: { target: 'skill-dock', active: false } }));
+                }}
+                className="relative -top-2 -right-2 w-6 h-6 rounded-full bg-accent/20 hover:bg-accent/40 text-accent hover:text-white transition-all duration-200 flex items-center justify-center text-xs font-bold pointer-events-auto z-10"
+                title="Release Orb (ESC)"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
         <div className="absolute w-98 h-100 bg-accent/10 blur-3xl rounded-full" style={{ transform: 'rotateX(75deg)' }}></div>
-        <div className="absolute w-28 h-30 bg-accent/50 blur-3xl rounded-full" style={{ transform: 'rotateX(75deg)' }}></div>
+          <div className="absolute w-28 h-30 bg-accent/50 blur-3xl rounded-full" style={{ transform: 'rotateX(75deg)' }}></div>
 
-        <div className="inner-dock-container pointer-events-none">
-          <div id="skill-dock" className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-accent/5 border border-accent/20 flex items-center justify-center shadow-[0_0_80px_rgba(var(--accent-rgb),0.2)]">
-            <div className="w-6 h-6 bg-accent rounded-full animate-pulse shadow-[0_0_20px_var(--accent)]" />
+          <div className="inner-dock-container pointer-events-none">
+            <div id="skill-dock" className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-accent/5 border border-accent/20 flex items-center justify-center shadow-[0_0_80px_rgba(var(--accent-rgb),0.2)]">
+              <div className="w-6 h-6 bg-accent rounded-full animate-pulse shadow-[0_0_20px_var(--accent)]" />
+              
           </div>
         </div>
 
@@ -156,7 +191,7 @@ const Skills = ({ orbStatus }) => {
             style={{ marginTop: '-100px' }} // Changed from -140px to -100px to move it down
           >
             <div className="relative">
-              Wake me up from the pedestal for more info!
+              Wake the orb up for more info!
               <div className="absolute inset-0 bg-accent/10 rounded-lg blur-sm animate-pulse"></div>
             </div>
           </motion.div>
@@ -167,7 +202,7 @@ const Skills = ({ orbStatus }) => {
           className="absolute inset-0 z-50 cursor-grab active:cursor-grabbing"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
-          onDragStart={() => { if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: true })); }}
+          onDragStart={() => { if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: { target: 'skill-dock', active: true } })); }}
           // Changed delta.x * 0.5 to -0.5 to match the inverted rotation logic
           onDrag={(_, info) => rotationDegrees.set(rotationDegrees.get() - info.delta.x * 0.5)}
           onDragEnd={(_, info) => {
@@ -190,7 +225,7 @@ const Skills = ({ orbStatus }) => {
             setHoveredSkill={setHoveredSkill}
             onClick={() => {
               bringToFront(index);
-              if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: true }));
+              if (orbStatus !== 'sleeping') window.dispatchEvent(new CustomEvent('orb-dock', { detail: { target: 'skill-dock', active: true } }));
             }}
           />
         ))}

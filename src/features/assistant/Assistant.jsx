@@ -9,9 +9,11 @@ const Assistant = ({ onStatusChange }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
     const [isGlitching, setIsGlitching] = useState(true);
+    const [isDocked, setIsDocked] = useState(false);
+    const [dockTarget, setDockTarget] = useState(null); 
+    const [projectSequenceStep, setProjectSequenceStep] = useState(0);
 
     const messageTimerRef = useRef(null);
-    // Initialize at 0, but we keep it hidden until the first sync
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
 
@@ -19,135 +21,175 @@ const Assistant = ({ onStatusChange }) => {
     const orbX = useSpring(mouseX, springConfig);
     const orbY = useSpring(mouseY, springConfig);
 
-    // Assistant.jsx updates
-    const [isDocked, setIsDocked] = useState(false);
+    const STATION_CONFIGS = {
+        'project-station': { yOffset: -25, forceStatus: "chasing" },
+        'skill-dock': { yOffset: -45, forceStatus: "chasing" },
+        'hero-pedestal': { yOffset: -45, forceStatus: "sleeping" }
+    };
 
+    const PROJECT_STEP_TARGETS = {
+        2: '.aspect-video',
+        3: '.aspect-video', 
+        4: '.mt-6.p-4',    
+        5: '.mt-6.p-4'     
+    };
+
+    // --- 1. CORE TOGGLE LOGIC ---
+    const handleOrbToggle = () => {
+        // Clear any existing timers regardless of direction
+        if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+
+        if (status === "sleeping") {
+            setIsWaking(true);
+            setStatus("chasing");
+            setMessage("Systems Online ✨");
+            
+            // Clear message after 3 seconds
+            messageTimerRef.current = setTimeout(() => setMessage(""), 3000);
+            setTimeout(() => setIsWaking(false), 700);
+        } else {
+            // GO BACK TO SLEEP
+            setStatus("sleeping");
+            setIsDocked(false);
+            setDockTarget(null);
+            setMessage("Click to wake me up.");
+            // Do NOT set a timeout here, let it remain constant
+        }
+    };
+
+    // --- 2. EVENT LISTENERS ---
     useEffect(() => {
-        const handleDock = (e) => setIsDocked(e.detail);
-        window.addEventListener('orb-dock', handleDock);
-        return () => window.removeEventListener('orb-dock', handleDock);
-    }, []);
+        const handleDock = (e) => {
+            if (status === "sleeping") return;
+            const targetId = e.detail.target || "skill-dock";
+            const isActivating = e.detail.active;
 
-    // Update the movement useEffect:
+            if (isActivating && isDocked && dockTarget !== targetId) {
+                window.dispatchEvent(new CustomEvent('orb-dock', { 
+                    detail: { target: dockTarget, active: false } 
+                }));
+            }
+            setIsDocked(isActivating);
+            setDockTarget(isActivating ? targetId : null);
+            setProjectSequenceStep(isActivating && targetId === 'project-station' ? 1 : 0);
+        };
+
+        const handleOrbSay = (e) => {
+            // Do not allow external messages to override the sleep message
+            if (status === "sleeping") return;
+
+            if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+            setMessage(e.detail);
+            if (e.detail !== "") {
+                messageTimerRef.current = setTimeout(() => setMessage(""), 5000);
+            }
+        };
+
+        const handleExternalToggle = () => handleOrbToggle();
+
+        window.addEventListener('orb-dock', handleDock);
+        window.addEventListener('orb-say', handleOrbSay);
+        window.addEventListener('orb-toggle', handleExternalToggle);
+        
+        return () => {
+            window.removeEventListener('orb-dock', handleDock);
+            window.removeEventListener('orb-say', handleOrbSay);
+            window.removeEventListener('orb-toggle', handleExternalToggle);
+        };
+    }, [status, isDocked, dockTarget]);
+
+    // --- 3. POSITION & STATUS SYNC ---
     useEffect(() => {
         let animationFrameId;
         const syncPosition = () => {
-        const dock = document.getElementById("skill-dock");
-        const pedestal = document.getElementById("hero-pedestal");
+            let activeId = null;
+            
+            // Priority 1: If we are sleeping, stick to pedestal
+            // Priority 2: If we are awake and docked, go to dock
+            if (status === "sleeping") {
+                activeId = "hero-pedestal";
+            } else if (isDocked && dockTarget) {
+                activeId = dockTarget;
+            }
 
-        if (status !== "sleeping" && isDocked && dock) {
-            // DOCKING LOGIC: Lock to dock completely - no movement allowed
-            const rect = dock.getBoundingClientRect();
-            const targetX = rect.left + rect.width / 2 - 25;
-            const targetY = rect.top + rect.height / 2 - 25;
-            
-            // Set position directly without spring animation for complete lock
-            mouseX.set(targetX);
-            mouseY.set(targetY);
-            
-            // Ensure status stays "chasing" for the animation
-            if (status !== "chasing") setStatus("chasing");
-            } else if (status === "sleeping" && pedestal) {
-                // PEDESTAL LOGIC
-                const rect = pedestal.getBoundingClientRect();
+            const targetEl = activeId ? document.getElementById(activeId) : null;
+
+            if (targetEl) {
+                const rect = targetEl.getBoundingClientRect();
+                const config = STATION_CONFIGS[activeId] || { yOffset: -25 };
+                
                 mouseX.set(rect.left + rect.width / 2 - 25);
-                mouseY.set(rect.top + rect.height / 2 - 45);
+                mouseY.set(rect.top + rect.height / 2 + config.yOffset);
+                
+                // Only force "chasing" status for skill/project docks if awake
+                if (config.forceStatus === "chasing" && status !== "chasing") {
+                    setStatus("chasing");
+                }
             }
             animationFrameId = requestAnimationFrame(syncPosition);
         };
         syncPosition();
         return () => cancelAnimationFrame(animationFrameId);
-    }, [status, isDocked, mouseX, mouseY]);
+    }, [status, isDocked, dockTarget]);
 
+    // --- 4. PROJECT SEQUENCE & EYE TRACKING ---
     useEffect(() => {
-        if (onStatusChange) onStatusChange(status);
-    }, [status, onStatusChange]);
-    
-    // Listener for OrbTrigger events
-    useEffect(() => {
-        const handleOrbSay = (e) => {
-            const newContent = e.detail;
-            if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
-
-            if (newContent === "") {
-                messageTimerRef.current = setTimeout(() => setMessage(""), 1000);
-            } else {
-                setMessage(newContent);
-                messageTimerRef.current = setTimeout(() => setMessage(""), 5000);
+        if (isDocked && dockTarget === 'project-station' && projectSequenceStep > 0) {
+            const timers = {
+                1: { next: 2, time: 300 },
+                2: { next: 3, time: 600 },
+                3: { next: 4, time: 2000 },
+                4: { next: 5, time: 500, action: () => window.dispatchEvent(new CustomEvent('show-project-description')) } 
+            };
+            const current = timers[projectSequenceStep];
+            if (current) {
+                const t = setTimeout(() => {
+                    if (current.action) current.action();
+                    setProjectSequenceStep(current.next);
+                }, current.time);
+                return () => clearTimeout(t);
             }
-        };
-
-        window.addEventListener('orb-say', handleOrbSay);
-        return () => {
-            window.removeEventListener('orb-say', handleOrbSay);
-            if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
-        };
-    }, []);
-
-    // 1. Initial Snap: Prevent (0,0) by calculating before the first paint
-    useLayoutEffect(() => {
-        const updateInitialPos = () => {
-            const pedestal = document.getElementById("hero-pedestal");
-            if (pedestal) {
-                const rect = pedestal.getBoundingClientRect();
-                const targetX = rect.left + rect.width / 2 - 25;
-                const targetY = rect.top + rect.height / 2 - 25;
-                
-                mouseX.set(targetX);
-                mouseY.set(targetY);
-                orbX.set(targetX);
-                orbY.set(targetY);
-                
-                // Show the orb now that it's in the right place
-                setIsVisible(true);
-            }
-        };
-
-        updateInitialPos();
-    }, []);
-
-    // 2. Continuous Sync while sleeping (handles scrolling)
-    useEffect(() => {
-        let animationFrameId;
-
-        const syncToPedestal = () => {
-            if (status === "sleeping") {
-                const pedestal = document.getElementById("hero-pedestal");
-                if (pedestal) {
-                    const rect = pedestal.getBoundingClientRect();
-                    mouseX.set(rect.left + rect.width / 2 - 25);
-                    mouseY.set(rect.top + rect.height / 2 - 45);
-                }
-            }
-            animationFrameId = requestAnimationFrame(syncToPedestal);
-        };
-        
-        syncToPedestal();
-
-        return () => cancelAnimationFrame(animationFrameId);
-    }, [status, mouseX, mouseY]);
-
-    // Sync Logic
-    useEffect(() => {
-    let animationFrameId;
-    const syncPosition = () => {
-        const dock = document.getElementById("skill-dock");
-        
-        if (isDocked && dock) {
-        const rect = dock.getBoundingClientRect();
-        // Use set() immediately to prevent the "trailing" effect
-        mouseX.set(rect.left + rect.width / 2 - 25);
-        mouseY.set(rect.top + rect.height / 2 - 45);
-        if (status !== "chasing") setStatus("chasing");
         }
-        // ... rest of pedestal logic ...
-        animationFrameId = requestAnimationFrame(syncPosition);
-    };
-    syncPosition();
-    return () => cancelAnimationFrame(animationFrameId);
-    }, [isDocked, status, mouseX, mouseY]);
+    }, [isDocked, dockTarget, projectSequenceStep]);
 
-    // 3. Glitch Timer
+    useEffect(() => {
+        const handleMove = (e) => {
+            const orbPos = { x: orbX.get() + 25, y: orbY.get() + 25 };
+            
+            if (status === "sleeping") {
+                setEyeOffset({ x: 0, y: 2 }); // Sleepy look
+                return;
+            }
+
+            const dx = e.clientX - orbPos.x, dy = e.clientY - orbPos.y;
+            const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+            
+            if (!isDocked) {
+                const screenWidth = window.innerWidth;
+                const safeMargin = 120;
+                let tx = e.clientX > screenWidth / 2 ? e.clientX - safeMargin : e.clientX + safeMargin;
+                mouseX.set(Math.max(20, Math.min(tx, screenWidth - 70)));
+                mouseY.set(e.clientY - 25);
+            }
+            setEyeOffset({ x: (dx/dist)*5, y: (dy/dist)*5 });
+        };
+        window.addEventListener("mousemove", handleMove);
+        return () => window.removeEventListener("mousemove", handleMove);
+    }, [status, isDocked, dockTarget, projectSequenceStep]);
+
+    // --- 5. INITIAL APPEARANCE ---
+    useLayoutEffect(() => {
+        const pedestal = document.getElementById("hero-pedestal");
+        if (pedestal) {
+            const rect = pedestal.getBoundingClientRect();
+            const tx = rect.left + rect.width / 2 - 25;
+            const ty = rect.top + rect.height / 2 - 45;
+            mouseX.set(tx); mouseY.set(ty);
+            orbX.set(tx); orbY.set(ty);
+            setIsVisible(true);
+        }
+    }, []);
+
     useEffect(() => {
         if (isVisible) {
             const timer = setTimeout(() => setIsGlitching(false), 1000);
@@ -155,105 +197,28 @@ const Assistant = ({ onStatusChange }) => {
         }
     }, [isVisible]);
 
-    // 4. Movement Logic
-    useEffect(() => {
-        const handleMove = (e) => {
-            // If docked, completely lock position and only update eyes
-            if (isDocked) {
-                const dx = e.clientX - orbX.get();
-                const dy = e.clientY - orbY.get();
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist > 0) {
-                    setEyeOffset({x: (dx/dist) * 5, y: (dy/dist) * 5})
-                }
-                return; // Don't allow any position changes when docked
-            }
-
-            if (status !== "sleeping") {
-                const screenWidth = window.innerWidth;
-                const safeMargin = 120;
-                
-                let targetX = e.clientX > screenWidth / 2 ? e.clientX - safeMargin : e.clientX + safeMargin;
-                targetX = Math.max(20, Math.min(targetX, screenWidth - 70));
-                
-                mouseX.set(targetX);
-                mouseY.set(e.clientY - 25);
-
-                const dx = e.clientX - orbX.get();
-                const dy = e.clientY - orbY.get();
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist > 10) {
-                    setEyeOffset({
-                        x: (dx / dist) * 4,
-                        y: (dy / dist) * 4
-                    });
-                } else {
-                    setEyeOffset({ x: 0, y: 0 });
-                }
-
-                if (dist > 600 && status !== "tired" && !isDocked) {
-                    setStatus("tired");
-                    setMessage("Wait For Me!!");
-                    setTimeout(() => { setStatus("chasing"); setMessage(""); }, 2000);
-                }
-            }
-        };
-
-        window.addEventListener("mousemove", handleMove);
-        return () => window.removeEventListener("mousemove", handleMove);
-    }, [status, orbX, orbY, mouseX, mouseY, isDocked]);
-
-    // 5. Pedestal Click to Sleep
-    useEffect(() => {
-        const pedestal = document.getElementById("hero-pedestal");
-        if (pedestal) {
-            const handlePedestalClick = () => {
-                if (status === "chasing" || status === "tired") {
-                    setStatus("sleeping");
-                    setMessage("Good night!");
-                    setTimeout(() => setMessage(""), 2000);
-                }
-            };
-            pedestal.addEventListener("click", handlePedestalClick);
-            return () => pedestal.removeEventListener("click", handlePedestalClick);
-        }
-    }, [status]);
-
-    const handleWakeUp = () => {
-        if (status === "sleeping") {
-            setIsWaking(true);
-            setStatus("chasing");
-            setMessage("Hello There! I'll be your assistant for today!✨");
-            setTimeout(() => setIsWaking(false), 700);
-            // Use the ref here too for consistency
-            if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
-            messageTimerRef.current = setTimeout(() => setMessage(""), 3000);
-        }
-    };
+    useEffect(() => { if (onStatusChange) onStatusChange(status); }, [status]);
 
     return (
         <motion.div 
             className={`orb-container ${status} ${isWaking ? 'wake-up-anim' : ''}`}
             style={{ 
-                x: orbX, y: orbY, 
-                opacity: isVisible ? 1 : 0,
+                x: orbX, y: orbY, opacity: isVisible ? 1 : 0,
                 visibility: isVisible ? 'visible' : 'hidden',
-                position: 'fixed', top: 0, left: 0,
-                pointerEvents: 'auto', zIndex: 1000 
+                position: 'fixed', top: 0, left: 0, zIndex: 1000 
             }}
-            onClick={handleWakeUp}
+            onClick={handleOrbToggle}
         >
             {message && (
                 <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    key={message} 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
                     className="speech-bubble"
                 >
                     {message}
                 </motion.div>
             )}
-
             <div className={`orb-main ${isGlitching ? 'glitch-appear' : ''}`}>
                 <div className="orb-face" style={{ transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
                     <div className="eye-socket">

@@ -1,9 +1,11 @@
 import pfp from '../assets/pfp.png'
+
 import paw from '../assets/projects/paw.png'
 import pisa from '../assets/projects/pisa.png'
 import portfolio from '../assets/projects/portfolio.png'
 import govconnect from '../assets/projects/govconnect.png'
 import recipe from '../assets/projects/recipe.png'
+
 import py from '../assets/skills/python.png'
 import js from '../assets/skills/js.png'
 import tw from '../assets/skills/tw.png'
@@ -11,7 +13,11 @@ import react from '../assets/skills/react.png'
 import css from '../assets/skills/css.png'
 import html from '../assets/skills/html.png'
 import node from '../assets/skills/node.png'
-import ai from '../assets/skills/ai.png'
+import java from '../assets/skills/java.png'
+import sql from '../assets/skills/sql.png'
+import flutter from '../assets/skills/flutter.png'
+
+import CVGenerator from '../features/cvgenerator/CVGenerator'
 
 
 
@@ -28,7 +34,7 @@ export const heroData = {
     profileImg: pfp, // Path to your photo
     buttons: {
         primary: { text: "View Projects", link: "#projects" },
-        secondary: { text: "Contact Me", link: "#contact" }
+        secondary: { text: "Print My CV", link: "#cv" }
     }
 };
 
@@ -60,13 +66,15 @@ export const aboutData = {
 
 export const skills = [
     {name: "React", icon: react, level: "50", info: "I'm the heart of this portfolio's interactivity!"},
-    {name: "AI/LLM", icon: ai, level: "25", info: "She's learning to integrate me with modern LLMs."},
     {name: "Tailwind", icon: tw, level: "50", info: "Used for the sleek dark-mode styling you see here."},
     {name: "JavaScript", icon: js, level: "50", info: "The logic that powers my sentient brain!"},
     {name: "Python", icon: py, level: "25", info: "Her choice for AI and data processing."},
     {name: "Node.js", icon: node, level: "75", info: "Backend choice"},
     {name: "HTML", icon: html, level: "75", info: "Backend choice"},
-    {name: "CSS", icon: css, level: "75", info: "Backend choice"}
+    {name: "CSS", icon: css, level: "75", info: "Backend choice"},
+    {name: "Java", icon: java, level: "25", info: ""},
+    {name: "Flutter", icon: flutter, level: "25", info: ""},
+    {name: "SQL", icon: sql, level: "75", info: ""},
 ]
 
 export const fallbackProjects = [

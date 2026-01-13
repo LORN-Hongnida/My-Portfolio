@@ -11,8 +11,17 @@ const SkillCard = ({ skill, isHovered }) => {
     >
       {/* Icon Placeholder - You can add your SVG icons here later */}
       <div className={`w-12 h-12 mb-3 rounded-lg flex items-center justify-center text-2xl transition-colors
-        ${isHovered ? 'text-accent' : 'text-app-text/40'}`}>
-        {skill.icon || skill.name[0]} 
+        ${isHovered ? 'text-accent' : 'opacity-10'}`}>
+        {skill.icon ? (
+  <img 
+    src={skill.icon} 
+    alt={skill.name} 
+    className="w-6 h-6 object-contain" // adjust size/styling as needed
+  />
+) : (
+  skill.name[0]
+)}
+
       </div>
       
       <span className={`font-mono text-xs tracking-widest uppercase transition-opacity

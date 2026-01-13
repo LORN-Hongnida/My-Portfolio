@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 const DecryptText = ({ text, active }) => {
     const [displayText, setDisplayText] = useState(text);
-    const chars = '!<>-_\\/[]{}—=+*^?#________';
+    // const chars = '!<>-_\\/[]{}—=+*^?#________';
+    const chars = '-_';
 
     useEffect(() => {
         if (!active) {

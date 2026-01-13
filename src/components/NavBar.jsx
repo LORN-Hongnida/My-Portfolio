@@ -38,6 +38,7 @@ const Navbar = () => {
       <a href="#about" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }} className="text-app-text/70 hover:text-app-text">About</a>
       <a href="#skills" onClick={(e) => { e.preventDefault(); scrollToSection('skills'); }} className="text-app-text/70 hover:text-app-text">Skills</a>
       <a href="#projects" onClick={(e) => { e.preventDefault(); scrollToSection('projects'); }} className="text-app-text/70 hover:text-app-text">Projects</a>
+      <a href="#projects" onClick={(e) => { e.preventDefault(); scrollToSection('contact'); }} className="text-app-text/70 hover:text-app-text">Contact</a>
     </div>
     <button onClick={toggleTheme} className="text-xl">{theme === 'dark' ? '☀️' : '🌙'}</button>
   </div>

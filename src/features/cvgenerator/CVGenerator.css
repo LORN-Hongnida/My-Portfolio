@@ -1,0 +1,53 @@
+.cv-document {
+  width: 210mm;
+  min-height: 297mm;
+  font-family: 'Inter', system-ui, sans-serif;
+  box-sizing: border-box;
+}
+
+.section-title {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 20px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #e2e8f0;
+  color: #64748b; /* Slate 500 */
+}
+
+/* Print Overrides */
+/* This rule targets the printer's page settings */
+@media print {
+  @page {
+    size: A4;
+    margin: 0; /* This removes the date, time, and title from the edges */
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0;
+  }
+
+  .cv-document {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Force colors in PDF generation */
+  header {
+    -webkit-print-color-adjust: exact;
+    background-color: #0f172a !important;
+  }
+  .bg-slate-50 {
+    background-color: #f8fafc !important;
+  }
+  .bg-accent {
+    background-color: var(--accent-color) !important;
+  }
+}

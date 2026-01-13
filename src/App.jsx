@@ -5,18 +5,37 @@ import Hero from "./components/Hero.jsx";
 import About from "./components/About.jsx";
 import Skills from "./components/Skills.jsx";
 import Projects from "./components/Projects.jsx";
+import CVGenerator from "./features/cvgenerator/CVGenerator.jsx";
+import Footer from "./components/Footer.jsx";
+import Contact from "./components/Contact.jsx";
 
 function App() {
   const [orbStatus, setOrbStatus] = useState('sleeping');
+  const handleOrbToggle = () => {
+    window.dispatchEvent(new CustomEvent('orb-toggle'));
+  };
   
   return (
     <div className="min-h-screen bg-[#0b0b1a] text-white">
       <Navbar />
-      <Hero orbStatus={orbStatus}/>
-      <About orbStatus={orbStatus}/>
-      <Skills orbStatus={orbStatus} />
-      <Projects orbStatus={orbStatus} />
+      <section id="hero">
+        <Hero orbStatus={orbStatus} onOrbToggle={handleOrbToggle} />
+      </section>
+      <section id="about">
+        <About orbStatus={orbStatus}/>
+      </section>
+      <section id="skills">
+        <Skills orbStatus={orbStatus} />
+      </section>
+      <section id="projects">
+        <Projects orbStatus={orbStatus} />
+      </section>
+      <section id="contact">
+        <Contact orbStatus={orbStatus} />
+      </section>
+      <Footer />
       <Assistant onStatusChange={setOrbStatus}/>
+      <CVGenerator />
     </div>
   );
 }

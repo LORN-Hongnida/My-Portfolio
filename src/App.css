@@ -47,7 +47,6 @@
 }
 
 #projects {
-  /* Keeps the top and bottom of the section faded out for a smoother scroll experience */
-  mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  /* Removed mask-image to eliminate black gradient at top and bottom */
 }
 
