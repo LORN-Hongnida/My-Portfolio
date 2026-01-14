@@ -9,6 +9,9 @@ import CVGenerator from "./features/cvgenerator/CVGenerator.jsx";
 import Footer from "./components/Footer.jsx";
 import Contact from "./components/Contact.jsx";
 
+// for web analytics
+import { Analytics } from "@vercel/analytics/react"
+
 function App() {
   const [orbStatus, setOrbStatus] = useState('sleeping');
   const handleOrbToggle = () => {
@@ -17,6 +20,7 @@ function App() {
   
   return (
     <div className="min-h-screen bg-[#0b0b1a] text-white">
+      <Analytics />
       <Navbar />
       <section id="hero">
         <Hero orbStatus={orbStatus} onOrbToggle={handleOrbToggle} />
