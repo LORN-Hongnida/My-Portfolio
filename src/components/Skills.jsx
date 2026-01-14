@@ -50,7 +50,7 @@ const Skills = ({ orbStatus }) => {
 
   // dock message
   useEffect(() => {
-    setShowDockMessage(orbStatus === 'sleeping' && !isOrbDocked);
+    setShowDockMessage(orbStatus === 'sleeping' || !isOrbDocked);
   }, [orbStatus, isOrbDocked]);
 
   // rotation helpers (INVERTED DIRECTION)

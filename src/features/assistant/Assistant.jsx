@@ -12,6 +12,7 @@ const Assistant = ({ onStatusChange }) => {
     const [isDocked, setIsDocked] = useState(false);
     const [dockTarget, setDockTarget] = useState(null); 
     const [projectSequenceStep, setProjectSequenceStep] = useState(0);
+    const [forcedEyeOffset, setForcedEyeOffset] = useState(null);
 
     const messageTimerRef = useRef(null);
     const mouseX = useMotionValue(0);
@@ -72,6 +73,9 @@ const Assistant = ({ onStatusChange }) => {
             setIsDocked(isActivating);
             setDockTarget(isActivating ? targetId : null);
             setProjectSequenceStep(isActivating && targetId === 'project-station' ? 1 : 0);
+            if (!isActivating) {
+                setForcedEyeOffset(null);
+            }
         };
 
         const handleOrbSay = (e) => {
@@ -87,14 +91,23 @@ const Assistant = ({ onStatusChange }) => {
 
         const handleExternalToggle = () => handleOrbToggle();
 
+        const handleProjectChanged = () => {
+            if (isDocked && dockTarget === 'project-station') {
+                setProjectSequenceStep(1);
+                setForcedEyeOffset(null);
+            }
+        };
+
         window.addEventListener('orb-dock', handleDock);
         window.addEventListener('orb-say', handleOrbSay);
         window.addEventListener('orb-toggle', handleExternalToggle);
+        window.addEventListener('project-changed', handleProjectChanged);
         
         return () => {
             window.removeEventListener('orb-dock', handleDock);
             window.removeEventListener('orb-say', handleOrbSay);
             window.removeEventListener('orb-toggle', handleExternalToggle);
+            window.removeEventListener('project-changed', handleProjectChanged);
         };
     }, [status, isDocked, dockTarget]);
 
@@ -143,17 +156,39 @@ const Assistant = ({ onStatusChange }) => {
             };
             const current = timers[projectSequenceStep];
             if (current) {
+                // Set eye offset for this step
+                const targetSelector = PROJECT_STEP_TARGETS[projectSequenceStep];
+                if (targetSelector) {
+                    const targetEl = document.querySelector(targetSelector);
+                    if (targetEl) {
+                        const orbPos = { x: orbX.get() + 25, y: orbY.get() + 25 };
+                        const rect = targetEl.getBoundingClientRect();
+                        const targetX = rect.left + rect.width / 2;
+                        const targetY = rect.top + rect.height / 2;
+                        const dx = targetX - orbPos.x, dy = targetY - orbPos.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                        setForcedEyeOffset({ x: (dx/dist)*5, y: (dy/dist)*5 });
+                    }
+                } else {
+                    setForcedEyeOffset(null);
+                }
+
                 const t = setTimeout(() => {
                     if (current.action) current.action();
                     setProjectSequenceStep(current.next);
                 }, current.time);
                 return () => clearTimeout(t);
+            } else {
+                // End of sequence
+                setForcedEyeOffset(null);
             }
         }
     }, [isDocked, dockTarget, projectSequenceStep]);
 
     useEffect(() => {
         const handleMove = (e) => {
+            if (forcedEyeOffset) return; // Skip if forced
+
             const orbPos = { x: orbX.get() + 25, y: orbY.get() + 25 };
             
             if (status === "sleeping") {
@@ -175,7 +210,7 @@ const Assistant = ({ onStatusChange }) => {
         };
         window.addEventListener("mousemove", handleMove);
         return () => window.removeEventListener("mousemove", handleMove);
-    }, [status, isDocked, dockTarget, projectSequenceStep]);
+    }, [status, isDocked, dockTarget, projectSequenceStep, forcedEyeOffset]);
 
     // --- 5. INITIAL APPEARANCE ---
     useLayoutEffect(() => {
@@ -220,7 +255,7 @@ const Assistant = ({ onStatusChange }) => {
                 </motion.div>
             )}
             <div className={`orb-main ${isGlitching ? 'glitch-appear' : ''}`}>
-                <div className="orb-face" style={{ transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
+                <div className="orb-face" style={{ transform: `translate(${ (forcedEyeOffset || eyeOffset).x }px, ${ (forcedEyeOffset || eyeOffset).y }px)` }}>
                     <div className="eye-socket">
                         <div className="eye left"></div>
                         <div className="eye right"></div>

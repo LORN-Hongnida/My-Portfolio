@@ -18,7 +18,7 @@ const Contact = ({ orbStatus }) => {
 
       <div className="max-w-4xl mx-auto">
         <OrbTrigger comment="Awaiting user input. Secure channel ready." orbStatus={orbStatus}>
-                    backgroundImage: 'bg-gradient-to-r from-accent to-purple-500',
+                    
           <h2 className="text-4xl md:text-6xl font-bold text-app-text tracking-tighter mb-12">
             LEAVE_A_<span className="text-accent">MESSAGE</span>
           </h2>

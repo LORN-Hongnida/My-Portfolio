@@ -9,6 +9,7 @@ const Projects = ({ projects = fallbackProjects, orbStatus }) => {
   const [typedText, setTypedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [canSkip, setCanSkip] = useState(false);
+  const [imageGrayscale, setImageGrayscale] = useState(100);
   const typingIntervalRef = useRef(null);
 
   // Typing effect for description
@@ -123,8 +124,19 @@ const Projects = ({ projects = fallbackProjects, orbStatus }) => {
       setTypedText('');
       setIsTyping(false);
       setCanSkip(false);
+      setImageGrayscale(100);
+    } else {
+      setImageGrayscale(0);
     }
   }, [isDocked]);
+
+  // Handle image grayscale transition when project changes
+  useEffect(() => {
+    if (isDocked) {
+      setImageGrayscale(100);
+      setTimeout(() => setImageGrayscale(0), 10);
+    }
+  }, [currentIndex, isDocked]);
 
   // Manual undock button handler
   const handleUndock = () => {
@@ -260,7 +272,7 @@ const Projects = ({ projects = fallbackProjects, orbStatus }) => {
                       backgroundRepeat: 'no-repeat',
                       backgroundPosition: 'center',
                       backgroundSize: 'cover',
-                      filter: isDocked ? 'grayscale(0%)' : 'grayscale(100%)',
+                      filter: `grayscale(${imageGrayscale}%)`,
                       transition: 'filter 2s ease-in-out'
                     }}
                   />
